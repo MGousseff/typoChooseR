@@ -1,4 +1,4 @@
-library(shiny) 
+library(shiny)  
 library(shinythemes)
 
 # Ce script définit l'interface utilisateur pour l'appli TypoChooseR
@@ -86,9 +86,11 @@ shinyUI(fluidPage( theme=shinytheme("united"),
            uiOutput("varPlot"),
            h3("Vous pouvez entrer un libellé pour les groupes"),
            uiOutput("libelles"),
-           h3("Exporter l'échantillon segmenté"),
-           h4("Cette fonctionnalité n'est pour le moment implémentée que pour un usage local de l'application"),
-           actionButton("exporter","Exporter")
+           #h3("Exporter l'échantillon segmenté"),
+           #h4("Cette fonctionnalité n'est pour le moment implémentée que pour un usage local de l'application"),
+           #actionButton("exporter","Exporter"),
+           h3("Télécharger le fichier partitionné"),
+           downloadButton('downloadData', 'Télécharger')
            ),
            mainPanel(
              h3("Répartition des quatre variables les plus liées aux groupes"),

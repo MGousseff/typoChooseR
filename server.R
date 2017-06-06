@@ -1,5 +1,6 @@
 # Chargement des packages nécessaires
 #
+
 require(FactoMineR) # Utilisé pour les ACM
 require(mclust) #pour les CAH
 require(fields)
@@ -476,6 +477,34 @@ shinyServer(function(input,output){
     print("fait")
   })
 
+  #######################################################
+  ###
+  ### télécharger le fichier partitionné
+  #######################################################
+  
+  output$downloadData <- downloadHandler(
+    
+    # This function returns a string which tells the client
+    # browser what name to use when saving the file.
+    filename = function() {
+      paste(input$fichier, "clustered.csv", sep = ".")
+    },
+    
+    # This function should write data to a file given to it by
+    # the argument 'file'.
+    content = function(file) {
+      sep <- ";"
+      libelles<-NULL
+      for (i in 1:input$nbGroupes){
+        print(paste("groupe",i))
+        libelles[i]<-input[[paste("groupe",i)]]
+      }
+      # Write to a file specified by the 'file' argument
+      data<-data.frame(cbind(dfEchant(),sorties()$clusters,libelles[sorties()$clusters]))
+                       names(data)<-c(names(dfEchant()),"groupID","groupLabel")
+      write.table(data, file, sep = sep,row.names = FALSE)
+    }
+  )
   
     
     })
