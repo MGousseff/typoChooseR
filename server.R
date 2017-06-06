@@ -1,4 +1,5 @@
 # Chargement des packages nécessaires
+#
 require(FactoMineR) # Utilisé pour les ACM
 require(mclust) #pour les CAH
 require(fields)
