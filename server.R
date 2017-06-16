@@ -11,6 +11,7 @@ require(ggplot2) # pour des graphes avancés
 require(reshape2) # pour la fonction melt
 #require(cowplot) # Pour l'affichage de plusieurs ggplot en mode grille
 require(gridExtra)
+require(shinyBS)
 
 options(shiny.maxRequestSize=60*1024^2) 
 
