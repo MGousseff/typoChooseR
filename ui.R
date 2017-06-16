@@ -1,5 +1,24 @@
 library(shiny)  
 library(shinythemes)
+library(shinycssloaders)
+
+mycss <- "
+#plot-container {
+  position: relative;
+}
+#loading-spinner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: -1;
+  margin-top: -33px;  /* half of the spinner's height */
+  margin-left: -33px; /* half of the spinner's width */
+}
+#plot.recalculating {
+  z-index: -2;
+}
+"
+
 
 # Ce script définit l'interface utilisateur pour l'appli TypoChooseR
 shinyUI(fluidPage( theme=shinytheme("united"),
@@ -11,15 +30,31 @@ shinyUI(fluidPage( theme=shinytheme("united"),
               ########################################
              tabPanel("Choix des variables actives",
              sidebarPanel(width=3,
-                fileInput("fichier", "Veuillez choisir un fichier pour votre jeu de données qualitatives",
-                    accept=c(
-                         "text/csv",
-                          "text/comma-separated-values,text/plain",
-                          ".csv")), 
-                        tags$div(id = 'ici'),
-                        sliderInput("percIndiv1","Pourcentage echantillon pour représentation de l'ACM",min=0.1,max=100,value=25,step=0.5),
-                        uiOutput("varChoice")
-                           ),
+                #  fileInput("fichier", "Veuillez choisir un fichier pour votre jeu de données qualitatives",
+                #            accept=c(
+                #              "text/csv",
+                #              "text/comma-separated-values,text/plain",
+                #              ".csv")), 
+                #          tags$div(id = 'ici'),
+      
+                          
+                  fileInput("fichier",
+                 label=h4("Veuillez choisir un fichier pour votre jeu de données qualitatives",
+                          tags$style(type = "text/css", "#q1 {vertical-align: top;}"),
+                 bsButton("q1", label = "", icon = icon("question"), style = "info", size = "extra-small")
+                 ),
+                 accept=c(
+                     "text/csv",
+                     "text/comma-separated-values,text/plain",
+                    ".csv")),
+                  bsPopover(id = "q1", title = "InputType",
+                            content = "Seuls les fichiers csv avec un séparateur de champ point-virgule sont pour le moment pris en charge",
+                            placement = "right", 
+                           options = list(container = "body")
+                 ),
+                sliderInput("percIndiv1","Pourcentage echantillon pour représentation de l'ACM",min=0.1,max=100,value=25,step=0.5),
+                withSpinner(uiOutput("varChoice")) 
+                      ),
               mainPanel(
                         h4(textOutput("messageNA")),
                         
@@ -28,8 +63,8 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                                                 list("","Convertir en \"Inconnu\"","Supprimer"))),
                         
                         tags$div(id='la'),
-                        plotOutput("MCAplot"),
-                        plotOutput("cramerPlot")
+                        withSpinner(plotOutput("MCAplot")),
+                        withSpinner(plotOutput("cramerPlot"))
                                                 )
              ),
              
@@ -58,8 +93,8 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                 checkboxInput("compareGroup","Explorer"),
                     #sliderInput("nbComp","Nombre d'axes ACM",min=2,max=20,value=4,step=1),
     
-                uiOutput("ui1"),
-                uiOutput("ui2"),
+                withSpinner(uiOutput("ui1")),
+                withSpinner(uiOutput("ui2")),
     
                 ###actionButton("fixer", "Fixer le nombre maxi de composantes à la dimensionnalité du fichier"),
                 selectInput("methode","Méthode de Partitionnement :",
@@ -71,9 +106,9 @@ shinyUI(fluidPage( theme=shinytheme("united"),
          
                mainPanel(
                 h3(textOutput("dim")),
-                plotOutput("plane1Output"),
+                withSpinner(plotOutput("plane1Output")),
                 #plotOutput("criteria"),
-                plotOutput("imageMapOutput")
+                withSpinner(plotOutput("imageMapOutput"))
                 )
             ),
           ######################################
@@ -89,7 +124,7 @@ shinyUI(fluidPage( theme=shinytheme("united"),
            #h3("Exporter l'échantillon segmenté"),
            #h4("Cette fonctionnalité n'est pour le moment implémentée que pour un usage local de l'application"),
            #actionButton("exporter","Exporter"),
-           h3("Télécharger le fichier partitionné"),
+           h3("Télécharger le fichier partitionné au format csv"),
            downloadButton('downloadData', 'Télécharger')
            ),
            mainPanel(
