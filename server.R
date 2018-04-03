@@ -187,7 +187,7 @@ shinyServer(function(input,output){
         theme_minimal()+ 
         theme(axis.text.x = element_text(angle = 45, vjust = 1, 
                                          size = 10, hjust = 1))+
-        ggtitle("Liens entre les variables retenus \n mesuré par le V de Cramer")+
+        ggtitle("Liens entre les variables retenues \n mesuré par le V de Cramer")+
         coord_fixed()
     }}
   })

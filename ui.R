@@ -1,23 +1,7 @@
 library(shiny)  
 library(shinythemes)
 library(shinycssloaders)
-
-mycss <- "
-#plot-container {
-  position: relative;
-}
-#loading-spinner {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: -1;
-  margin-top: -33px;  /* half of the spinner's height */
-  margin-left: -33px; /* half of the spinner's width */
-}
-#plot.recalculating {
-  z-index: -2;
-}
-"
+require(shinyBS)
 
 
 # Ce script définit l'interface utilisateur pour l'appli TypoChooseR
@@ -87,6 +71,10 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                 #    "text/comma-separated-values,text/plain",
                 #    ".csv")), 
                 sliderInput("percIndiv","Pourcentage echantillon pour exploration",min=0.1,max=100,value=1,step=0.5),
+               
+                selectInput("methode","Méthode de Partitionnement :",
+                            choices=c("Kmeans+CAH"="mixte","Modèle de melange"="mixAll","K-means seulement"="kmeans"),selected="kmeans"),
+                ###actionButton("fixer", "Fixer le nombre maxi de composantes à la dimensionnalité du fichier"),
                 sliderInput("nbGroupes","Nombre de groupes",min=2,max=10,value=4,step=1),
                 h4("Explorer nombre de groupes"),
                 h5("Pour un nombre de composantes donné"),
@@ -96,9 +84,6 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                 withSpinner(uiOutput("ui1")),
                 withSpinner(uiOutput("ui2")),
     
-                ###actionButton("fixer", "Fixer le nombre maxi de composantes à la dimensionnalité du fichier"),
-                selectInput("methode","Méthode de Partitionnement :",
-                  choices=c("Kmeans+CAH"="mixte","Modèle de melange"="mixAll","K-means seulement"="kmeans"),selected="kmeans"),
                 h4("Explorer le nombre de composantes"),
                 actionButton("imageMap","Comparer les partitions"),
                 h4("Attention ! Comparaison = temps de calcul qui augmente avec la taille de l'échantillon")
