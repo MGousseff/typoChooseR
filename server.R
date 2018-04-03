@@ -39,7 +39,7 @@ kmeansCAH<-function(data,nbGroupes){
 }
 
 
-shinyServer(function(input,output){
+shinyServer(function(input,output,session){
   
   
   # # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # #
@@ -68,7 +68,7 @@ shinyServer(function(input,output){
                                                         ### à l'affichage du conditionalPanel de choix du mode de gestion des NA 
     
     outputOptions(output, "alerteNA1", suspendWhenHidden = FALSE)   # Comme ce alerteNA1 n'est pas utilisé par l'ui il faut préciser qu'elle existe
-                                                                    # pour que la condtiob du conditionnalPanel le repère !!!
+                                                                    # pour que la condtion du conditionnalPanel le repère !!!
     
     output$messageNA<-renderText({  # Affichage du nombre de données manquantes du fichier
       if (alerteNA()>0){paste("Ce jeu de données contient",sum(is.na(df1()))," données manquantes, veuillez choisir la façon de les prendre en compte")}
@@ -120,11 +120,22 @@ shinyServer(function(input,output){
     if (is.null(infile)){h3("Veuillez charger un fichier")}
     else {checkboxGroupInput("activeVar", "Variables à prendre en compte pour le partitionnement",
                              choices=names(df()), selected=names(df()))
-    }
+              }
   })
   
+  observeEvent(input$reset,{  # Gestion du cochage décochage de toutes les variables à la fois
+    print(as.numeric(input$reset))
+    if (as.numeric(input$reset) > 0) {
+      if (as.numeric(input$reset) %% 2 == 0){
+        updateCheckboxGroupInput(session,"activeVar",selected=names(df()))
+      }
+    else{
+      updateCheckboxGroupInput(session,"activeVar",selected=character(0))
+    }
+    }
+    })
   
-  dfEchant1<-reactive({                     # jeu de données avec la taille d'échantillon et les variables sélectionnées
+  dfEchant1<-eventReactive(input$goChoix,{                     # jeu de données avec la taille d'échantillon et les variables sélectionnées
     dfEchant1<-dfEchantPreChoice()[,input$activeVar]
     print(input$activeVar)
     dfEchant1
@@ -132,7 +143,7 @@ shinyServer(function(input,output){
   
   # Réalisation de l'ACM sur l'échantillon choisi
   
-  dfMCA1<-reactive({      #Réalisation de l'ACM avec MCA de factoMineR'
+  dfMCA1<-eventReactive(input$goChoix,{      #Réalisation de l'ACM avec MCA de factoMineR'
     if (alerteNA()==0 | input$naMethod=="Convertir en \"Inconnu\"" | input$naMethod=="Supprimer"){
     dfMCA1<-MCA(dfEchant1(),graph=F,ncp=sum(sapply(dfEchant1(),nlevels)))
     dfMCA1}

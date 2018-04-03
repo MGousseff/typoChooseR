@@ -2,7 +2,8 @@ library(shiny)
 library(shinythemes)
 library(shinycssloaders)
 require(shinyBS)
-
+require(shinyWidgets)
+#devtools::install_github("dreamRs/shinyWidgets")
 
 # Ce script définit l'interface utilisateur pour l'appli TypoChooseR
 shinyUI(fluidPage( theme=shinytheme("united"),
@@ -36,8 +37,11 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                             placement = "right", 
                            options = list(container = "body")
                  ),
-                sliderInput("percIndiv1","Pourcentage echantillon pour représentation de l'ACM",min=0.1,max=100,value=25,step=0.5),
-                withSpinner(uiOutput("varChoice")) 
+                sliderInput("percIndiv1","Pourcentage echantillon pour représentation de l'ACM",
+                            min=0.1,max=100,value=25,step=0.5),
+                withSpinner(uiOutput("varChoice")),
+                actionButton("reset","Tout/aucune variables"),  
+                actionButton("goChoix","Appliquez le choix de variables")
                       ),
               mainPanel(
                         h4(textOutput("messageNA")),
@@ -76,8 +80,9 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                             choices=c("Kmeans+CAH"="mixte","Modèle de melange"="mixAll","K-means seulement"="kmeans"),selected="kmeans"),
                 ###actionButton("fixer", "Fixer le nombre maxi de composantes à la dimensionnalité du fichier"),
                 sliderInput("nbGroupes","Nombre de groupes",min=2,max=10,value=4,step=1),
-                h4("Explorer nombre de groupes"),
-                h5("Pour un nombre de composantes donné"),
+                h4("Variation de l'inertie intra"),
+                h5("selon le nombre de groupe"),
+                h5("à nombre de composantes fixé"),
                 checkboxInput("compareGroup","Explorer"),
                     #sliderInput("nbComp","Nombre d'axes ACM",min=2,max=20,value=4,step=1),
     
@@ -92,6 +97,7 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                mainPanel(
                 h3(textOutput("dim")),
                 withSpinner(plotOutput("plane1Output")),
+               # conditionalPanel(condition='input.compareGroup%%2==0',),
                 #plotOutput("criteria"),
                 withSpinner(plotOutput("imageMapOutput"))
                 )
