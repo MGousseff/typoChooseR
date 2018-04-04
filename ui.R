@@ -41,7 +41,7 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                             min=0.1,max=100,value=25,step=0.5),
                 withSpinner(uiOutput("varChoice")),
                 actionButton("reset","Tout/aucune variables"),  
-                actionButton("goChoix","Appliquez le choix de variables")
+                actionButton("goChoix","Appliquez les choix")
                       ),
               mainPanel(
                         h4(textOutput("messageNA")),

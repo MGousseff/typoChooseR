@@ -8,6 +8,7 @@ require(vcd) # pour calcul des cramers
 require(MixAll)#pour le modèle de mélange
 require(clusterCrit) # pour le pseudo F de Calinsky Harabasz
 require(ggplot2) # pour des graphes avancés
+require(ggrepel)
 require(reshape2) # pour la fonction melt
 #require(cowplot) # Pour l'affichage de plusieurs ggplot en mode grille
 require(gridExtra)
@@ -243,8 +244,8 @@ shinyServer(function(input,output,session){
   })
   output$ui2<- renderUI({
     infile<-input$fichier 
-    if (is.null(infile)){sliderInput("factPlan","Plan Factoriel supplémentaire à représenter",value=3,min=3,max=5)}
-    else{sliderInput("factPlan","Plan Factoriel supplémentaire à représenter",value=3,min=3,max=round(length(dfMCA()$eig[,1])/2),step=1)}
+    if (is.null(infile)){sliderInput("factPlan","Plan Factoriel supplémentaire à représenter",value=2,min=2,max=5)}
+    else{sliderInput("factPlan","Plan Factoriel supplémentaire à représenter",value=2,min=2,max=round(length(dfMCA()$eig[,1])/2),step=1)}
   })
   
   
@@ -288,12 +289,16 @@ shinyServer(function(input,output,session){
     infile<-input$fichier 
     if (!is.null(infile)){
     planIndex<-c(input$factPlan*2-1,input$factPlan*2)
+    mods_1_2<-data.frame(dim1=dfMCA()$var$coord[dfMCA()$var$cos2[,1]>0.3,1],
+                         dim2=dfMCA()$var$coord[dfMCA()$var$cos2[,1]>0.3,1])
+    inds_1_2<-data.frame(dim1=sorties()$comp[,1],dim2=sorties()$comp[,2])
+    print(str(mods_1_2))
     par(mfrow=c(2,2))
-    plot(sorties()$comp[,1:2],main="Classes sur le premier plan fact.",col=sorties()$clusters) 
-    plot(sorties()$comp[,3:4],main="Classes sur le deuxième plan fact.",col=sorties()$clusters)
-    plot(sorties()$comp[,planIndex],main=paste("Classes sur le plan fact. ", isolate(input$factPlan)),col=sorties()$clusters)
-    
-    
+    #plot(sorties()$comp[,1:2],main="Classes sur le premier plan fact.",col=sorties()$clusters) 
+    #plot(sorties()$comp[,planIndex],main=paste("Classes sur le plan fact. ", isolate(input$factPlan)),col=sorties()$clusters)
+    indPlot<-ggplot(inds_1_2,aes(dim1,dim2))+geom_point(color=sorties()$clusters)
+    modPlot<-ggplot(mods_1_2,aes(dim1,dim2,label=rownames(mods_1_2)))+geom_point(color="red")+geom_text_repel()
+    grid.arrange(indPlot,modPlot)
     #########    # Comparaison des pseudo F selon nb groupes à nb composantes donné
     if(input$compareGroup==T&input$methode=="kmeans"){
     data<-isolate(dfMCA()$ind$coord)[sample(1:nrow(isolate(dfMCA()$ind$coord)),size=min(nrow(isolate(dfMCA()$ind$coord)),5000)),]
