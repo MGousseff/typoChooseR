@@ -40,7 +40,7 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                 sliderInput("percIndiv1","Pourcentage echantillon pour représentation de l'ACM",
                             min=0.1,max=100,value=25,step=0.5),
                 withSpinner(uiOutput("varChoice")),
-                actionButton("reset","Tout/aucune variables"),  
+                actionButton("reset","Toute/aucune variable(s)"),  
                 actionButton("goChoix","Appliquez les choix")
                       ),
               mainPanel(
@@ -96,6 +96,7 @@ shinyUI(fluidPage( theme=shinytheme("united"),
          
                mainPanel(
                 h3(textOutput("dim")),
+                sliderInput("cos2","A partir de quelle valeur du cos2 représenter les modalités ?", min=0, max=1,value=0.3 ),
                 withSpinner(plotOutput("plane1Output")),
                # conditionalPanel(condition='input.compareGroup%%2==0',),
                 #plotOutput("criteria"),

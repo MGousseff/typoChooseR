@@ -289,16 +289,31 @@ shinyServer(function(input,output,session){
     infile<-input$fichier 
     if (!is.null(infile)){
     planIndex<-c(input$factPlan*2-1,input$factPlan*2)
-    mods_1_2<-data.frame(dim1=dfMCA()$var$coord[dfMCA()$var$cos2[,1]>0.3,1],
-                         dim2=dfMCA()$var$coord[dfMCA()$var$cos2[,1]>0.3,1])
+    planAbs<-input$factPlan*2-1
+    planOrd<-input$factPlan*2
+    mods_1_2<-data.frame(dim1=dfMCA()$var$coord[dfMCA()$var$cos2[,1]>input$cos2,1],
+                         dim2=dfMCA()$var$coord[dfMCA()$var$cos2[,1]>input$cos2,2])
     inds_1_2<-data.frame(dim1=sorties()$comp[,1],dim2=sorties()$comp[,2])
-    print(str(mods_1_2))
-    par(mfrow=c(2,2))
+    planAbsc<-input$factPlan*2-1
+    planOrd<-input$factPlan*2
+    modsSup<-data.frame(absc=dfMCA()$var$coord[dfMCA()$var$cos2[,planAbsc]>input$cos2,planAbsc],
+                        ord=dfMCA()$var$coord[dfMCA()$var$cos2[,planAbsc]>input$cos2,planOrd])
+    indsSup<-data.frame(absc=sorties()$comp[,planAbsc],ord=sorties()$comp[,planOrd])
+
+    #print(str(mods_1_2))
+    #par(mfrow=c(2,2))
     #plot(sorties()$comp[,1:2],main="Classes sur le premier plan fact.",col=sorties()$clusters) 
     #plot(sorties()$comp[,planIndex],main=paste("Classes sur le plan fact. ", isolate(input$factPlan)),col=sorties()$clusters)
-    indPlot<-ggplot(inds_1_2,aes(dim1,dim2))+geom_point(color=sorties()$clusters)
-    modPlot<-ggplot(mods_1_2,aes(dim1,dim2,label=rownames(mods_1_2)))+geom_point(color="red")+geom_text_repel()
-    grid.arrange(indPlot,modPlot)
+    indPlot1<-ggplot(inds_1_2,aes(dim1,dim2))+geom_point(color=sorties()$clusters)+
+            theme_classic()
+    modPlot1<-ggplot(mods_1_2,aes(dim1,dim2,label=rownames(mods_1_2)))+geom_point(color="red")+geom_text_repel()+theme_classic()
+    indPlotSup<-ggplot(indsSup,aes(absc,ord))+geom_point(color=sorties()$clusters)+
+      labs(x=paste("dim",planAbsc),y=paste("dim",planOrd),
+           title=paste("Individus sur le ",input$factPlan,"ième plan factoriel"))+theme_classic()
+    modPlotSup<-ggplot(modsSup,aes(absc,ord,label=rownames(modsSup)))+geom_point(color="red")+geom_text_repel()+
+      labs(x=paste("dim",planAbsc),y=paste("dim",planOrd))+theme_classic()
+    
+    grid.arrange(indPlot1,modPlot1,indPlotSup,modPlotSup)
     #########    # Comparaison des pseudo F selon nb groupes à nb composantes donné
     if(input$compareGroup==T&input$methode=="kmeans"){
     data<-isolate(dfMCA()$ind$coord)[sample(1:nrow(isolate(dfMCA()$ind$coord)),size=min(nrow(isolate(dfMCA()$ind$coord)),5000)),]
