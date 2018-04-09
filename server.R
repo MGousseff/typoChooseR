@@ -486,8 +486,8 @@ shinyServer(function(input,output,session){
   output$varPlot <- renderUI({
     infile<-input$fichier 
     if (is.null(infile)){h3("Veuillez charger un fichier")}
-    else {selectInput("varPlot", "Représenter la variable : ", choices=names(df()),selected=names(dfEchant())[1],
-                      multiple=F)
+    else {selectInput("varPlot", "Sélectionner jusqu'à quatre autres variable à représenter : ", choices=names(df()),selected=names(dfEchant())[1],
+                      multiple=T)
     }
   })
   
@@ -507,40 +507,57 @@ shinyServer(function(input,output,session){
     indiceProv
   })
     
-  output$barPlots<-renderPlot({
-    par(mfrow=c(2,2))
+  output$barPlots<-renderPlot({   # boxplot des 4 variables les plus liées au groupe, en fonction du groupe
     groupes<-sorties()$clusters
-    tableProv<-table(dfEchant()[,1],groupes)
-    ### L'usage de cowplot::plot_grid est de faire l'équivalent de par(mfrow=) pour du ggplot2
     
     for(j in 1:4){
       tableProv<-table(dfEchant()[,varCor()[j]],groupes)
+      Vcram<-assocstats(tableProv)$cramer
       tableProv<-tableProv/apply(tableProv,1,sum)
-      tableDF<-as.data.frame(tableProv)
-      #print(tableDF)
-      varName<-print(names(dfEchant())[varCor()[j]])
+      varName<-names(dfEchant())[varCor()[j]] 
       nam<-paste("plot",j,sep="")
-      assign(nam,ggplot(data=as.data.frame(tableProv),aes(x=groupes,y=Freq,fill=Var1)) + geom_bar(position="fill",stat="identity")
-             + guides(fill=guide_legend(title=varName)))
-               #barplot(tableProv,
-      #      col = rainbow(5),
-       #     legend=rownames(tableProv),
-        #    xlab="groupes")
+      print(as.data.frame(tableProv))
+      assign(nam,ggplot(data=as.data.frame(tableProv),aes(x=groupes,y=Freq,fill=Var1)) + 
+               geom_bar(position="fill",stat="identity")+ 
+               labs(title=varName,subtitle = paste("V Cramer groupe/",varName, round(Vcram,2)))+
+               guides(fill=guide_legend(title=varName)))
       }
-    print(ls()) 
+    
     grid.arrange(plot1,plot2,plot3,plot4, nrow=2,ncol=2)
     
         })
+  
   output$barPlot2<-renderPlot({
-    print(input$varPlot)
-    groupes<-sorties()$clusters
-    tableProv<-table(df()[rownames(dfEchant()),input$varPlot],groupes)
-    print("test")
+        validate(need(
+      ((length(input$varPlot)<5)&(length(input$varPlot)>0)),
+      "Choisissez de 1 à 4 variables à représenter en fonction des groupes"))
     
-    tableProv<-tableProv/apply(tableProv,1,sum)
-    tableProv<-as.data.frame(tableProv)
-    print(tableProv)
-    ggplot(data=as.data.frame(tableProv),aes(x=groupes,y=Freq,fill=Var1)) + geom_bar(position="fill",stat="identity")+ggtitle(paste("Répartition des modalités de la variable ",input$varPlot, " par groupe"))
+    groupes<-sorties()$clusters
+    
+    for(j in 1:length(input$varPlot)){
+        tableProv<-table(dfEchant()[,input$varPlot[j]],groupes)
+        varProv<-dfEchant()[,input$varPlot[j]]
+        Vcram<-assocstats(tableProv)$cramer
+        tableProv<-tableProv/apply(tableProv,1,sum)
+        print("tableprov")
+        print(tableProv)
+        #tableDF<-as.data.frame(tableProv)
+        #print(tableDF)
+        varName<-names(dfEchant()[,input$varPlot])[j]
+        nam<-paste("plot",j,sep="")
+        assign(nam,ggplot(data=as.data.frame(tableProv),aes(x=groupes,y=Freq,fill=Var1)) + # Var1 vient de la sortie de table
+                 geom_bar(position="fill",stat="identity")+ 
+                 labs(title=varName,subtitle = paste("V Cramer groupe/",varName, round(Vcram,2)))+
+                 guides(fill=guide_legend(title=varName)))
+      }
+    
+    #Solution honteuse pour gérer le nombre de variables représentées
+    if(length(input$varPlot)==1){grid.arrange(plot1,nrow=1,ncol=2)} 
+      else if (length(input$varPlot)==2){grid.arrange(plot1,plot2,nrow=1,ncol=2)} 
+        else if (length(input$varPlot)==3){grid.arrange(plot1,plot2,plot3,nrow=2,ncol=2)}
+          else{grid.arrange(plot1,plot2,plot3,plot4,nrow=2,ncol=2)}
+        
+    
   })
 
   output$libelles<-renderUI({ 

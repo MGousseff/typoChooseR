@@ -110,8 +110,21 @@ shinyUI(fluidPage( theme=shinytheme("united"),
       tabPanel( "Exploration de la Typo Choisie",   
            sidebarPanel(
                   width=4,
-           h3("Caractérisation des groupes retenus"),
+           h3("Caractérisation des groupes retenus", 
+              tags$style(type = "text/css", "#q2 {vertical-align: top;}"),
+              bsButton("q2", label = "", icon = icon("question"), style = "info", size = "extra-small")
+           ),
+           bsPopover(id = "q2", title = "Unchoose",
+                     content = "Pour déselectionner une variable, cliquer sur son nom et appuyer sur la touche del ou suppr de votre clavier",
+                     placement = "right", 
+                     options = list(container = "body")
+           ),
            uiOutput("varPlot"),
+           bsPopover(id = "q2", title = "Unchoose",
+                     content = "Pour déselectionner une variable, cliquer sur son nom et appuyer sur la touche del ou suppr de votre clavier",
+                     placement = "right", 
+                     options = list(container = "body")
+           ),
            h3("Vous pouvez entrer un libellé pour les groupes"),
            uiOutput("libelles"),
            #h3("Exporter l'échantillon segmenté"),
