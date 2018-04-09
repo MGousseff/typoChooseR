@@ -95,7 +95,8 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                 ),
          
                mainPanel(
-                h3(textOutput("dim")),
+                h4(textOutput("dim1")),
+                h4(textOutput("dim2")),
                 sliderInput("cos2","A partir de quelle valeur du cos2 représenter les modalités ?", min=0, max=1,value=0.3 ),
                 withSpinner(plotOutput("plane1Output")),
                # conditionalPanel(condition='input.compareGroup%%2==0',),

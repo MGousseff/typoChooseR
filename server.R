@@ -97,15 +97,23 @@ shinyServer(function(input,output,session){
   
   # Affichage de la taille d'échantillon
   
-  texte<-reactive({                                       # invite à charger le jeu de données, ou à choisir quelle proportion on en prend une fois qu'il est chargé
+  texte1<-reactive({                                       # invite à charger le jeu de données, ou à choisir quelle proportion on en prend une fois qu'il est chargé
     if(is.null(df())){"Choisissez votre jeu de données"}
     else{nombre<-round(input$percIndiv/100*nrow(df()),digits=0)
-    nombre2<-ncol(dfEchantPreChoice())
+    nombre2<-ncol(dfEchant())
     paste("On échantillonne ",nombre,"lignes, soit ", input$percIndiv, 
-          "pourcent du jeu de données qui a ",nombre2," variables")}
+          "pourcent du jeu de données.")}
+  })
+  texte2<-reactive({
+    if(is.null(df())){" "}
+    else{
+    nombre2<-ncol(dfEchant())
+    nombre3<-sum(unlist(lapply(dfEchant(),nlevels)))
+    paste("La sélection comporte ",nombre3," catégories issues de ",nombre2," variables.")} 
   })
   
-  output$dim<-renderText({texte()})
+  output$dim1<-renderText({texte1()})
+  output$dim2<-renderText({texte2()})
   
   
   
@@ -291,29 +299,84 @@ shinyServer(function(input,output,session){
     planIndex<-c(input$factPlan*2-1,input$factPlan*2)
     planAbs<-input$factPlan*2-1
     planOrd<-input$factPlan*2
+    
+    ModVar_1_2<-function(mod){names(dfMCA()$call$X)[apply(dfMCA()$call$X,2,function(x){mod%in%x})]}
+    
+    ## Données pour le premier plan factoriel
+      #indivs
+    inds_1_2<-data.frame(dim1=sorties()$comp[,1],dim2=sorties()$comp[,2],
+                         classe=as.factor(sorties()$clusters))
+    
+      #catégories des variables, filtrées par le cos2 ### A FAIRE : prendre le cos2 moyen sur le plan
     mods_1_2<-data.frame(dim1=dfMCA()$var$coord[dfMCA()$var$cos2[,1]>input$cos2,1],
                          dim2=dfMCA()$var$coord[dfMCA()$var$cos2[,1]>input$cos2,2])
-    inds_1_2<-data.frame(dim1=sorties()$comp[,1],dim2=sorties()$comp[,2])
+   
+    ### RATTACHEMENT D'UNE MODALITE A SA VARIABLE NON RESOLU
+    modVarNames_1_2<-tapply(row.names(mods_1_2),row.names(mods_1_2),ModVar_1_2)
+    #print("mods_1_2")
+    #print(mods_1_2)
+    mods_1_2$vars<-as.factor(modVarNames_1_2)
+    #print("mods_1_2$vars vaut")
+    #print(mods_1_2$vars)
+    
+    ## Pour les plans supérieurs
     planAbsc<-input$factPlan*2-1
     planOrd<-input$factPlan*2
+    
+    
     modsSup<-data.frame(absc=dfMCA()$var$coord[dfMCA()$var$cos2[,planAbsc]>input$cos2,planAbsc],
                         ord=dfMCA()$var$coord[dfMCA()$var$cos2[,planAbsc]>input$cos2,planOrd])
-    indsSup<-data.frame(absc=sorties()$comp[,planAbsc],ord=sorties()$comp[,planOrd])
-
+    indsSup<-data.frame(absc=sorties()$comp[,planAbsc],ord=sorties()$comp[,planOrd],
+                        classe=as.factor(sorties()$clusters))
+    
+    
+      temp<-dfMCA()$call$X
+      ModVar<-function(chaine){names(temp)[apply(temp,2,function(x){chaine%in%x})]} # Quelle honte, modifier ce code !
+      print(names(temp)[apply(temp,2,function(x){row.names(modsSup)[1]%in%x})])
+      #ModVar<-function(chaine){names(temp)[apply(temp,2,function(x){chaine%in%x})]}
+      #print(paste("modvar de modsup 1 =",ModVar(row.names(modsSup)[1])))
+      modVarNames<-tapply(row.names(modsSup),row.names(modsSup),ModVar)
+      modsSup$vars<-as.factor(modVarNames)
+    
+    
+    print("les modalités rep dans le plan fact sont")
+      print(row.names(modsSup))
+    print("elles correspondent aux variables")
+    print(modVarNames)
+    #varCol=modVarCol
+    
+    
     #print(str(mods_1_2))
     #par(mfrow=c(2,2))
     #plot(sorties()$comp[,1:2],main="Classes sur le premier plan fact.",col=sorties()$clusters) 
     #plot(sorties()$comp[,planIndex],main=paste("Classes sur le plan fact. ", isolate(input$factPlan)),col=sorties()$clusters)
-    indPlot1<-ggplot(inds_1_2,aes(dim1,dim2))+geom_point(color=sorties()$clusters)+
-            theme_classic()
-    modPlot1<-ggplot(mods_1_2,aes(dim1,dim2,label=rownames(mods_1_2)))+geom_point(color="red")+geom_text_repel()+theme_classic()
-    indPlotSup<-ggplot(indsSup,aes(absc,ord))+geom_point(color=sorties()$clusters)+
-      labs(x=paste("dim",planAbsc),y=paste("dim",planOrd),
-           title=paste("Individus sur le ",input$factPlan,"ième plan factoriel"))+theme_classic()
-    modPlotSup<-ggplot(modsSup,aes(absc,ord,label=rownames(modsSup)))+geom_point(color="red")+geom_text_repel()+
-      labs(x=paste("dim",planAbsc),y=paste("dim",planOrd))+theme_classic()
+    indPlot1<-ggplot(inds_1_2,aes(dim1,dim2,color=classe))+geom_point()+
+            #labs(title="Individus sur le premier plan factoriel",group="classe")+
+            theme_classic()+stat_ellipse(geom="polygon",alpha=0.2,aes(fill=classe))+
+      stat_ellipse(aes(dim1,dim2,group=classe),linetype=2,color="black")
+    
+    
+    indPlotSup<-ggplot(indsSup,aes(absc,ord,color=classe))+geom_point()+
+      #labs(x=paste("dim",planAbsc),y=paste("dim",planOrd),title=paste("Individus sur le ",input$factPlan,"ième plan factoriel"))+
+            theme_classic()+stat_ellipse(geom="polygon",alpha=0.2,aes(fill=classe))+
+      stat_ellipse(aes(absc,ord,group=classe),linetype=2,color="black")
+    
+    modPlot1<-ggplot(mods_1_2,aes(dim1,dim2,label=rownames(mods_1_2),color=vars))+
+      geom_point()+scale_color_brewer(palette="Set1",guide=F)+
+      geom_text_repel()+theme_classic() +
+      labs(title="Modalités les mieux projetées sur le premier plan factoriel")
+
+    modPlotSup<-ggplot(modsSup,aes(absc,ord,label=rownames(modsSup),color=vars))+geom_point()+
+      scale_color_brewer(palette="Set1",guide=FALSE)+geom_text_repel()+
+      labs(title=paste("Modalités les mieux projetées sur le ",input$factPlan,"ème plan factoriel"), 
+           x=paste("dim",planAbsc),
+           y=paste("dim",planOrd)
+           )+
+      theme_classic()
     
     grid.arrange(indPlot1,modPlot1,indPlotSup,modPlotSup)
+    
+    
     #########    # Comparaison des pseudo F selon nb groupes à nb composantes donné
     if(input$compareGroup==T&input$methode=="kmeans"){
     data<-isolate(dfMCA()$ind$coord)[sample(1:nrow(isolate(dfMCA()$ind$coord)),size=min(nrow(isolate(dfMCA()$ind$coord)),5000)),]
