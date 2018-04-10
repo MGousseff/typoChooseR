@@ -40,16 +40,15 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                 sliderInput("percIndiv1","Pourcentage echantillon pour représentation de l'ACM",
                             min=0.1,max=100,value=25,step=0.5),
                 withSpinner(uiOutput("varChoice")),
-                actionButton("reset","Toute/aucune variable(s)"),  
-                actionButton("goChoix","Appliquez les choix")
-                      ),
+                actionButton("reset","Toute/aucune variable(s)") 
+                ),
               mainPanel(
                         h4(textOutput("messageNA")),
                         
                         conditionalPanel(condition="output.alerteNA1>0",
                                     selectInput("naMethod", "Choisir la méthode de prise en compte des NA",
                                                 list("","Convertir en \"Inconnu\"","Supprimer"))),
-                        
+                        actionButton("goChoix","Appliquez les choix"),
                         tags$div(id='la'),
                         withSpinner(plotOutput("MCAplot")),
                         withSpinner(plotOutput("cramerPlot"))
@@ -80,27 +79,33 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                             choices=c("Kmeans+CAH"="mixte","Modèle de melange"="mixAll","K-means seulement"="kmeans"),selected="kmeans"),
                 ###actionButton("fixer", "Fixer le nombre maxi de composantes à la dimensionnalité du fichier"),
                 sliderInput("nbGroupes","Nombre de groupes",min=2,max=10,value=4,step=1),
-                h4("Variation de l'inertie intra"),
-                h5("selon le nombre de groupe"),
-                h5("à nombre de composantes fixé"),
-                checkboxInput("compareGroup","Explorer"),
-                    #sliderInput("nbComp","Nombre d'axes ACM",min=2,max=20,value=4,step=1),
-    
                 withSpinner(uiOutput("ui1")),
                 withSpinner(uiOutput("ui2")),
     
                 h4("Explorer le nombre de composantes"),
                 actionButton("imageMap","Comparer les partitions"),
-                h4("Attention ! Comparaison = temps de calcul qui augmente avec la taille de l'échantillon")
+                h5("Attention ! Comparaison = temps de calcul qui augmente avec la taille de l'échantillon"),
+              
+                h3("Basculer vers la recherche du nombre de groupes"),
+                h4("(à nombre de composantes fixé)",
+                   tags$style(type="text/css", "#q3 {vertical-align: top;}"),
+                   bsButton("q3", label ="", icon=icon("question"),style="info", size="extra-small")
                 ),
+                bsPopover(id="q3", title="NbGroupes",
+                          content="Echantillon grand=> Résultat fiable MAIS procédure longue. Interprétation difficile : Explorer avec un groupe de plus ou moins que proposé par le critère",
+                          placement = "right", 
+                          options = list(container = "body")),
+                checkboxInput("compareGroup","Basculer")
+                
+          ),
          
                mainPanel(
                 h4(textOutput("dim1")),
                 h4(textOutput("dim2")),
-                sliderInput("cos2","A partir de quelle valeur du cos2 représenter les modalités ?", min=0, max=1,value=0.3 ),
+                conditionalPanel(condition="!input.compareGroup",
+                    sliderInput("cos2","A partir de quelle valeur du cos2 représenter les modalités ?", 
+                                min=0, max=1,value=0.3 )),
                 withSpinner(plotOutput("plane1Output")),
-               # conditionalPanel(condition='input.compareGroup%%2==0',),
-                #plotOutput("criteria"),
                 withSpinner(plotOutput("imageMapOutput"))
                 )
             ),
@@ -120,11 +125,7 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                      options = list(container = "body")
            ),
            uiOutput("varPlot"),
-           bsPopover(id = "q2", title = "Unchoose",
-                     content = "Pour déselectionner une variable, cliquer sur son nom et appuyer sur la touche del ou suppr de votre clavier",
-                     placement = "right", 
-                     options = list(container = "body")
-           ),
+           
            h3("Vous pouvez entrer un libellé pour les groupes"),
            uiOutput("libelles"),
            #h3("Exporter l'échantillon segmenté"),

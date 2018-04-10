@@ -307,9 +307,10 @@ shinyServer(function(input,output,session){
     inds_1_2<-data.frame(dim1=sorties()$comp[,1],dim2=sorties()$comp[,2],
                          classe=as.factor(sorties()$clusters))
     
+    
       #catégories des variables, filtrées par le cos2 ### A FAIRE : prendre le cos2 moyen sur le plan
-    mods_1_2<-data.frame(dim1=dfMCA()$var$coord[dfMCA()$var$cos2[,1]>input$cos2,1],
-                         dim2=dfMCA()$var$coord[dfMCA()$var$cos2[,1]>input$cos2,2])
+    mods_1_2<-data.frame(dim1=dfMCA()$var$coord[apply(dfMCA()$var$cos2[,1:2],1,mean)>input$cos2,1],
+                         dim2=dfMCA()$var$coord[apply(dfMCA()$var$cos2[,1:2],1,mean)>input$cos2,2])
    
     ### RATTACHEMENT D'UNE MODALITE A SA VARIABLE NON RESOLU
     modVarNames_1_2<-tapply(row.names(mods_1_2),row.names(mods_1_2),ModVar_1_2)
@@ -376,39 +377,63 @@ shinyServer(function(input,output,session){
     
     grid.arrange(indPlot1,modPlot1,indPlotSup,modPlotSup)
     
-    
+    ##########################################################################################
     #########    # Comparaison des pseudo F selon nb groupes à nb composantes donné
+    ##########################################################################################
+    
     if(input$compareGroup==T&input$methode=="kmeans"){
-    data<-isolate(dfMCA()$ind$coord)[sample(1:nrow(isolate(dfMCA()$ind$coord)),size=min(nrow(isolate(dfMCA()$ind$coord)),5000)),]
-    gPseudoFcompare<-function(j){
-      print(j)
-      intCriteria(data,kmeans(data,centers=j,iter.max = 100, nstart = 90,
-                                                         algorithm = "Hartigan-Wong")$cluster,crit="Calinski_Harabasz")}
-    groupSeq<-2:15
-    plot(unlist(tapply(X=groupSeq,INDEX=groupSeq,FUN=gPseudoFcompare,simplify=TRUE)),type='l',
-         ylab="Pseudo F",xlab="Nb Groupes",
-         main=paste("Pas de critère scalable","\n","pour le moment","\n", "fait avec un échantillon de taille 5000"))
+      data<-isolate(dfMCA()$ind$coord)[
+        sample(1:nrow(isolate(dfMCA()$ind$coord)),size=min(nrow(isolate(dfMCA()$ind$coord)),5000)),
+        1:input$nbComp]
+    
+      gPseudoFcompare<-function(j){
+        print(j)
+        intCriteria(data,kmeans(data,centers=j,iter.max = 100, nstart = 40,
+                                                         algorithm = "Hartigan-Wong")$cluster,crit="Silhouette")}
+      groupSeq<-2:15
+    
+      plot(unlist(tapply(X=groupSeq,INDEX=groupSeq,FUN=gPseudoFcompare,simplify=TRUE)),type='l',
+         ylab="Silhouette",xlab="Nb Groupes",
+         main=paste("Critère non scalable, cette exploration","\n", " est menée avec un sous-échantillon aléatoire",
+              "\n","de taille max(nombre de lignes de l'échantillon, 5000)"),
+         sub="choisir le nombre de groupe maximisant le critère silhouette")
     }
     
     if(input$compareGroup==T&input$methode=="mixte"){
-      data<-isolate(dfMCA()$ind$coord)[sample(1:nrow(isolate(dfMCA()$ind$coord)),size=min(nrow(isolate(dfMCA()$ind$coord)),5000)),]
-      gPseudoFcompare<-function(j){
+      data<-isolate(dfMCA()$ind$coord)[sample(1:nrow(isolate(dfMCA()$ind$coord)),
+                                              size=min(nrow(isolate(dfMCA()$ind$coord)),5000)),
+                                       1:isolate(input$nbComp)]
+      gPseudoFcompare<-function(j){ # finalement critère retenu = silhouette, mais je ne renomme pas la variable
         print(j)
-        intCriteria(data,kmeansCAH(data,nbGroupes=j),crit="Calinski_Harabasz")}
+        intCriteria(data,kmeansCAH(data,nbGroupes=j),crit="Silhouette")}
       groupSeq<-2:15
       plot(unlist(tapply(X=groupSeq,INDEX=groupSeq,FUN=gPseudoFcompare,simplify=TRUE)),type='l',
-           ylab="Pseudo F",xlab="Nb Groupes",
-           main=paste("Pas de critère scalable","\n","pour le moment","\n", "fait avec un échantillon de taille 5000"))
+           ylab="Silhouette",xlab="Nb Groupes",
+           main=paste("Critère non scalable, cette exploration","\n", " est menée avec un sous-échantillon aléatoire",
+                      "\n","de taille max(nombre de lignes de l'échantillon, 5000)"),
+           sub="choisir le nombre de groupe maximisant le critère silhouette")
     }
+    
+    if(input$compareGroup==T&input$methode=="mixAll"){
+      data<-isolate(dfEchant()[sample(1:nrow(isolate(dfEchant())),size=min(nrow(isolate(dfEchant())),5000)),])
+    
+      critere<-NULL
+      for (j in 2:15){
+      critere<-c(critere,clusterCategorical(isolate(dfEchant()),nbCluster=j,criterion="BIC")@criterion)
+      #data.classefinale
+      }
+      
+      print(critere)
+      plot(2:15,critere,type="l",xlab="Nombre de groupes",ylab="Critère BIC",main=paste("Critère non scalable, cette exploration","\n", " est menée avec un sous-échantillon aléatoire",
+                      "\n","de taille max(nombre de lignes de l'échantillon, 5000)"),sub="Préférez un nombre de groupes avec un critère BIC petit")
+           #main=paste("Critère non scalable, cette exploration","\n", " est menée avec un sous-échantillon aléatoire",
+                   #   "\n","de taille max(nombre de lignes de l'échantillon, 5000)"))
+    }
+    
+    
+    
     }
     })
-  
-
-  #output$criteria<-renderPlot({
-   # infile<-input$fichier 
-  #  if (!is.null(infile)){
-  #  plot(dfMCA()$eig[[1]],main="Valeurs Propres de l'ACM")}
-  # })
   
   
   #########   ############ #########   ############ #########   ############ #########   ############ #########   ############ 
@@ -425,7 +450,7 @@ shinyServer(function(input,output,session){
         #dimMax<-length(isolate(dfMCA())$eig[,1])
         dimMax<-sum(isolate(dfMCA())$eig[,1]>=0.05*isolate(dfMCA())$eig[1,1])
         print(dimMax)
-        data<-dfMCA()$ind$coord 
+        data<-isolate(dfMCA())$ind$coord 
         fkmeansCAH<-function(i){                    # création d'une fonction prenant l'indice en entrée afin d'utiliser outer pour la création de la heatmap
           print(i)
           kmeansCAH(data=data[,1:i],nbGroupes=isolate(input$nbGroupes))
@@ -458,10 +483,8 @@ shinyServer(function(input,output,session){
   
   
   output$imageMapOutput<-renderPlot({
-    input$imageMap
-    if(input$methode=="mixAll"){                   # Dans le cas du modèle de mélange, la carte 'na pas de sens, on prend toute l'info)
-      plot(1,2,xlab="",ylab="",type="n",xaxt="n",yaxt="n",main="Modèles de mélange")
-      text(1,2,"totalité de l'info toujours prise en compte")}
+    #input$imageMap
+    
     if(input$methode=="mixte"|input$methode=="kmeans"){
       #dimMax<-length(isolate(dfMCA())$eig[,1])
       dimMax<-sum(isolate(dfMCA())$eig[,1]>=0.05*isolate(dfMCA())$eig[1,1])
@@ -535,15 +558,18 @@ shinyServer(function(input,output,session){
     groupes<-sorties()$clusters
     
     for(j in 1:length(input$varPlot)){
-        tableProv<-table(dfEchant()[,input$varPlot[j]],groupes)
-        varProv<-dfEchant()[,input$varPlot[j]]
+      print("nombre de lignes")
+        print(nrow(df()[rownames(dfEchant()),input$varPlot[j]]))
+       print(nrow(groupes))
+        tableProv<-table(df()[rownames(dfEchant()),input$varPlot[j]],groupes)
+        varProv<-df()[rownames(dfEchant()),input$varPlot[j]]
         Vcram<-assocstats(tableProv)$cramer
         tableProv<-tableProv/apply(tableProv,1,sum)
         print("tableprov")
         print(tableProv)
         #tableDF<-as.data.frame(tableProv)
         #print(tableDF)
-        varName<-names(dfEchant()[,input$varPlot])[j]
+        varName<-names(dfEchantPreChoice()[,input$varPlot])[j]
         nam<-paste("plot",j,sep="")
         assign(nam,ggplot(data=as.data.frame(tableProv),aes(x=groupes,y=Freq,fill=Var1)) + # Var1 vient de la sortie de table
                  geom_bar(position="fill",stat="identity")+ 
