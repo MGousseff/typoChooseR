@@ -15,14 +15,7 @@ shinyUI(fluidPage( theme=shinytheme("united"),
               ########################################
              tabPanel("Choix des variables actives",
              sidebarPanel(width=3,
-                #  fileInput("fichier", "Veuillez choisir un fichier pour votre jeu de données qualitatives",
-                #            accept=c(
-                #              "text/csv",
-                #              "text/comma-separated-values,text/plain",
-                #              ".csv")), 
-                #          tags$div(id = 'ici'),
-      
-                          
+               
                   fileInput("fichier",
                  label=h4("Veuillez choisir un fichier pour votre jeu de données qualitatives",
                           tags$style(type = "text/css", "#q1 {vertical-align: top;}"),
@@ -44,8 +37,8 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                 actionButton("goChoix","Appliquez les choix")
                 ),
               mainPanel(
+                        actionButton("goChoix2","Appliquez les choix"),
                         h4(textOutput("messageNA")),
-                        
                         conditionalPanel(condition="output.alerteNA1>0",
                                     selectInput("naMethod", "Choisir la méthode de prise en compte des NA",
                                                 list("","Convertir en \"Inconnu\"","Supprimer"))),
@@ -96,8 +89,8 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                           content="Echantillon grand=> Résultat fiable MAIS procédure longue. Interprétation difficile : Explorer avec un groupe de plus ou moins que proposé par le critère",
                           placement = "right", 
                           options = list(container = "body")),
-                checkboxInput("compareGroup","Basculer")
-                
+                checkboxInput("compareGroup","Basculer"),
+                sliderInput("groupMax","Nombre maximum de groupes à explorer",min=5,max=15,value=8)
           ),
          
                mainPanel(
@@ -107,6 +100,7 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                     sliderInput("cos2","A partir de quelle valeur du cos2 représenter les modalités ?", 
                                 min=0, max=1,value=0.1 )),
                 withSpinner(plotOutput("plane1Output")),
+                verbatimTextOutput("echantSearchGroup"),
                 withSpinner(plotOutput("imageMapOutput"))
                 )
             ),

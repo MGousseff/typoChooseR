@@ -145,7 +145,7 @@ shinyServer(function(input,output,session){
     }
     })
   
-  dfEchant1<-eventReactive(input$goChoix,{                     # jeu de données avec la taille d'échantillon et les variables sélectionnées
+  dfEchant1<-eventReactive(input$goChoix|input$goChoix2,ignoreInit=T,{                     # jeu de données avec la taille d'échantillon et les variables sélectionnées
     dfEchant1<-dfEchantPreChoice()[,input$activeVar]
     print(input$activeVar)
     dfEchant1
@@ -153,14 +153,13 @@ shinyServer(function(input,output,session){
   
   # Réalisation de l'ACM sur l'échantillon choisi
   
-  dfMCA1<-eventReactive(input$goChoix,{      #Réalisation de l'ACM avec MCA de factoMineR'
+  dfMCA1<-eventReactive(input$goChoix|input$goChoix2,ignoreInit = F,{      #Réalisation de l'ACM avec MCA de factoMineR'
     if (alerteNA()==0 | input$naMethod=="Convertir en \"Inconnu\"" | input$naMethod=="Supprimer"){
     dfMCA1<-MCA(dfEchant1(),graph=F,ncp=sum(sapply(dfEchant1(),nlevels)))
     dfMCA1}
   })
   
   output$MCAplot<-renderPlot({          # Premier plan factoriel de l'ACM du point de vue modalités
-    
     if (alerteNA()==0 | input$naMethod=="Convertir en \"Inconnu\"" | input$naMethod=="Supprimer"){
     if (!is.null(input$fichier)){
       
@@ -297,6 +296,7 @@ shinyServer(function(input,output,session){
   output$plane1Output<-renderPlot({
     infile<-input$fichier 
     if (!is.null(infile)){
+      if(input$compareGroup==F){
     planIndex<-c(input$factPlan*2-1,input$factPlan*2)
     planAbs<-input$factPlan*2-1
     planOrd<-input$factPlan*2
@@ -319,19 +319,18 @@ shinyServer(function(input,output,session){
    
     ### RATTACHEMENT D'UNE MODALITE A SA VARIABLE NON RESOLU
     modVarNames_1_2<-tapply(row.names(mods_1_2),row.names(mods_1_2),ModVar_1_2)
-    #print("mods_1_2")
-    #print(mods_1_2)
-    mods_1_2$vars<-as.factor(modVarNames_1_2)
-    #print("mods_1_2$vars vaut")
-    #print(mods_1_2$vars)
     
+    mods_1_2$vars<-as.factor(modVarNames_1_2)
+   
     ## Pour les plans supérieurs
     planAbsc<-input$factPlan*2-1
     planOrd<-input$factPlan*2
     
+        #Eviter les cos2 infinis
     validate(need(sum(apply(dfMCA()$var$cos2[,planAbsc:planOrd],1,mean)==Inf)<1,
                   "Trop peu de données pour calculer les cos2, merci d'augmenter la taille de votre échantillon."))
     
+    # Sélection des données représentées sur le plan factoriel choisi par l'utilisateur
     modsSup<-data.frame(absc=dfMCA()$var$coord[apply(dfMCA()$var$cos2[,c(planAbsc,planOrd)],1,mean)>input$cos2,planAbsc],
                         ord=dfMCA()$var$coord[apply(dfMCA()$var$cos2[,c(planAbsc,planOrd)],1,mean)>input$cos2,planOrd])
     
@@ -342,24 +341,9 @@ shinyServer(function(input,output,session){
       temp<-dfMCA()$call$X
       ModVar<-function(chaine){names(temp)[apply(temp,2,function(x){chaine%in%x})]} # Quelle honte, modifier ce code !
       print(names(temp)[apply(temp,2,function(x){row.names(modsSup)[1]%in%x})])
-      #ModVar<-function(chaine){names(temp)[apply(temp,2,function(x){chaine%in%x})]}
-      #print(paste("modvar de modsup 1 =",ModVar(row.names(modsSup)[1])))
       modVarNames<-tapply(row.names(modsSup),row.names(modsSup),ModVar)
       modsSup$vars<-as.factor(modVarNames)
-    
-    
-    print("les modalités rep dans le plan fact sont")
-      print(row.names(modsSup))
-    print("elles correspondent aux variables")
-    print(modVarNames)
-    #varCol=modVarCol
-    
-    
-    
-    #print(str(mods_1_2))
-    #par(mfrow=c(2,2))
-    #plot(sorties()$comp[,1:2],main="Classes sur le premier plan fact.",col=sorties()$clusters) 
-    #plot(sorties()$comp[,planIndex],main=paste("Classes sur le plan fact. ", isolate(input$factPlan)),col=sorties()$clusters)
+  
     indPlot1<-ggplot(inds_1_2,aes(dim1,dim2,color=classe))+geom_point()+
             #labs(title="Individus sur le premier plan factoriel",group="classe")+
             theme_classic()+stat_ellipse(geom="polygon",alpha=0.2,aes(fill=classe))+
@@ -367,7 +351,7 @@ shinyServer(function(input,output,session){
     
     
     indPlotSup<-ggplot(indsSup,aes(absc,ord,color=classe))+geom_point()+
-      #labs(x=paste("dim",planAbsc),y=paste("dim",planOrd),title=paste("Individus sur le ",input$factPlan,"ième plan factoriel"))+
+      labs(x=paste("dim",planAbsc),y=paste("dim",planOrd),title=paste("Individus sur le ",input$factPlan,"ième plan factoriel"))+
             theme_classic()+stat_ellipse(geom="polygon",alpha=0.2,aes(fill=classe))+
       stat_ellipse(aes(absc,ord,group=classe),linetype=2,color="black")
     
@@ -386,65 +370,77 @@ shinyServer(function(input,output,session){
       theme_classic()
     
     grid.arrange(indPlot1,modPlot1,indPlotSup,modPlotSup)
-    
+      }
     ##########################################################################################
-    #########    # Comparaison des pseudo F selon nb groupes à nb composantes donné
+    #########    # Exploration du nombre de groupes
     ##########################################################################################
     
-    if(input$compareGroup==T&input$methode=="kmeans"){
+      
+      
+      else if(input$compareGroup==T&input$methode=="kmeans"){
+      input$percIndiv
       data<-isolate(dfMCA()$ind$coord)[
         sample(1:nrow(isolate(dfMCA()$ind$coord)),size=min(nrow(isolate(dfMCA()$ind$coord)),5000)),
         1:input$nbComp]
     
-      gPseudoFcompare<-function(j){
+      gCritcompare<-function(j){
         print(j)
         intCriteria(data,kmeans(data,centers=j,iter.max = 100, nstart = 40,
                                                          algorithm = "Hartigan-Wong")$cluster,crit="Silhouette")}
-      groupSeq<-2:15
+      groupSeq<-3:input$groupMax
     
-      plot(unlist(tapply(X=groupSeq,INDEX=groupSeq,FUN=gPseudoFcompare,simplify=TRUE)),type='l',
+      plot( groupSeq,unlist(tapply(X=groupSeq,INDEX=groupSeq,FUN=gCritcompare,simplify=TRUE)),type='l',
          ylab="Silhouette",xlab="Nb Groupes",
-         main=paste("Critère non scalable, cette exploration","\n", " est menée avec un sous-échantillon aléatoire",
-              "\n","de taille max(nombre de lignes de l'échantillon, 5000)"),
-         sub="choisir le nombre de groupe maximisant le critère silhouette")
+         main="Préférer un nombre de groupes avec un critère silhouette proche de 1")
     }
     
     if(input$compareGroup==T&input$methode=="mixte"){
+      input$percIndiv
       data<-isolate(dfMCA()$ind$coord)[sample(1:nrow(isolate(dfMCA()$ind$coord)),
                                               size=min(nrow(isolate(dfMCA()$ind$coord)),5000)),
                                        1:isolate(input$nbComp)]
-      gPseudoFcompare<-function(j){ # finalement critère retenu = silhouette, mais je ne renomme pas la variable
+      gCritcompare<-function(j){ # finalement critère retenu = silhouette, mais je ne renomme pas la variable
         print(j)
         intCriteria(data,kmeansCAH(data,nbGroupes=j),crit="Silhouette")}
-      groupSeq<-2:15
-      plot(unlist(tapply(X=groupSeq,INDEX=groupSeq,FUN=gPseudoFcompare,simplify=TRUE)),type='l',
+      groupSeq<-3:input$groupMax
+      
+      plot(groupSeq,unlist(tapply(X=groupSeq,INDEX=groupSeq,FUN=gCritcompare,simplify=TRUE)),type='l',
            ylab="Silhouette",xlab="Nb Groupes",
-           main=paste("Critère non scalable, cette exploration","\n", " est menée avec un sous-échantillon aléatoire",
-                      "\n","de taille max(nombre de lignes de l'échantillon, 5000)"),
-           sub="choisir le nombre de groupe maximisant le critère silhouette")
+           main="Préférer un nombre de groupes avec un critère silhouette proche de 1")
     }
     
     if(input$compareGroup==T&input$methode=="mixAll"){
+      input$percIndiv
       data<-isolate(dfEchant()[sample(1:nrow(isolate(dfEchant())),size=min(nrow(isolate(dfEchant())),5000)),])
-    
+      groupSeq<-3:input$groupMax
       critere<-NULL
-      for (j in 2:15){
+      for (j in 3:input$groupMax){
       critere<-c(critere,clusterCategorical(isolate(dfEchant()),nbCluster=j,criterion="BIC")@criterion)
       #data.classefinale
       }
       
-      print(critere)
-      plot(2:15,critere,type="l",xlab="Nombre de groupes",ylab="Critère BIC",main=paste("Critère non scalable, cette exploration","\n", " est menée avec un sous-échantillon aléatoire",
-                      "\n","de taille max(nombre de lignes de l'échantillon, 5000)"),sub="Préférez un nombre de groupes avec un critère BIC petit")
-           #main=paste("Critère non scalable, cette exploration","\n", " est menée avec un sous-échantillon aléatoire",
-                   #   "\n","de taille max(nombre de lignes de l'échantillon, 5000)"))
+      plot(groupSeq,critere,type="l",xlab="Nombre de groupes",ylab="Critère BIC",main="Préférez un nombre de groupes avec un critère BIC petit")
+    
     }
-    
-    
-    
     }
     })
   
+   output$echantSearchGroup<-renderText({
+     if(input$compareGroup==T){
+     paste("Si votre puissance de calcul est suffisante, augmentez la taille de l'échantillon pour une meilleure détection du nombre de groupes optimal.",
+           "\n","\n",
+           "Cependant, on réalise une typologie pour chaque nombre de groupe. Pour limiter le temps de calcul, la taille des échantillons utilisés est donc limitée à 5000 individus.",
+           "\n","\n",
+           "Note 1 : Le nombre optimal n'est qu'indicatif, il peut-être utile de regarder les typologies réalisées avec un groupe de plus ou de moins que l'optimum sur l'échantillon.",
+            "\n","\n",
+            "Note 2 : le critère silhouette doit être maximisé, le critère BIC doit être minimisé. ",
+           "\n","\n",
+           "Note 3 : la méthode Kmeans+CAH n'est pas recommandée, car elle est plus instable que les autres méthodes, il peut être prudent d'effectuer plusieurs fois la recherche de groupe",
+           "\n","\n",
+           " Note 4 : Les modèles de mélange ont parfois tendance à conserver un nombre plus grand de groupes, explorer avec un ou deux groupes de moins."
+            )
+    } 
+   })
   
   #########   ############ #########   ############ #########   ############ #########   ############ #########   ############ 
   ## Matrice des comparaisons de partitions avec Rand Index
@@ -456,7 +452,7 @@ shinyServer(function(input,output,session){
       infile<-isolate(input$fichier)                                     # NOTE : les isolate peuvent être supprimés grâce à l'encapsulation dans event reactive. 
       
       if (!is.null(infile)){
-      if(isolate(input$methode)=="mixte"){ 
+      if(isolate(input$compareGroup)==F&isolate(input$methode)=="mixte"){ 
         #dimMax<-length(isolate(dfMCA())$eig[,1])
         dimMax<-sum(isolate(dfMCA())$eig[,1]>=0.05*isolate(dfMCA())$eig[1,1])
         print(dimMax)
@@ -471,7 +467,7 @@ shinyServer(function(input,output,session){
         randf<-Vectorize(function(i,j){adjustedRandIndex(x=classesFinales[,i],y=classesFinales[,j])})
         rand.matrice<-as.matrix(outer(x,x,randf))
         rand.matrice}
-      if(isolate(input$methode)=="kmeans"){               # on fait des K-means avec toutes les composantes et on les compare
+        else if(isolate(input$compareGroup)==F&isolate(input$methode)=="kmeans"){               # on fait des K-means avec toutes les composantes et on les compare
         #dimMax<-length(isolate(dfMCA())$eig[,1])
         dimMax<-sum(isolate(dfMCA())$eig[,1]>=0.05*isolate(dfMCA())$eig[1,1])
         print(dimMax)
@@ -486,7 +482,7 @@ shinyServer(function(input,output,session){
         randf<-Vectorize(function(i,j){adjustedRandIndex(x=classesFinales[,i],y=classesFinales[,j])})
         rand.matrice<-outer(x,x,randf)
         rand.matrice} 
-      }
+      } else if(isolate(input$compareGroup)==F&isolate(input$methode)=="MixAll"){rand.matrice<-1}
       rand.matrice
     }
   )
@@ -495,7 +491,7 @@ shinyServer(function(input,output,session){
   output$imageMapOutput<-renderPlot({
     #input$imageMap
     
-    if(input$methode=="mixte"|input$methode=="kmeans"){
+    if(input$compareGroup==F&(input$methode=="mixte"|input$methode=="kmeans")){
       #dimMax<-length(isolate(dfMCA())$eig[,1])
       dimMax<-sum(isolate(dfMCA())$eig[,1]>=0.05*isolate(dfMCA())$eig[1,1])
       print(paste("dimMax le nombre de dimensions est de ",dimMax))
@@ -505,10 +501,16 @@ shinyServer(function(input,output,session){
                  main=paste("Indice de Rand pour comparer les partitions à ","\n",isolate(input$nbGroupes), " groupes"),
                  xlab="nombre d'axes retenus pour le calcul des distances", ylab="Nombre d'axes retenus pour le calcul des distances")
       plot(isolate(dfMCA()$eig[[1]]),main="Valeurs Propres de l'ACM",ylab="Valeurs propres axes ACM") # on met les valeurs propres à côté
-    }
+    } else {
+      plot(0,0,type="n",axes=F,yaxt='n',xaxt='n',ann=FALSE)
+            text(0,0,
+                 "Le modèle de mélange prend en compte toutes l'information, 
+                 pas de choix de nombre de composantes à faire",
+                 yaxt='n',xaxt='n',ann=FALSE,cex=1.6)}
   })
   
 
+  
   # # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # #
   # # ## # #
   # # ## # # INSTRUCTIONs RELATIVES AU TROISIEME ONGLET POUR L'ANALYSE DES GROUPES OBTENUS et l'export
@@ -518,7 +520,7 @@ shinyServer(function(input,output,session){
   output$groupesEff<-renderDataTable({
     
     prov1<-table(sorties()$clusters,deparse.level=0)
-    prov2<-prov1/sum(prov1)
+    prov2<-prov1/sum(prov1)*100
     prov<-rbind(as.integer(prov1),round(prov2,2))
     colnames(prov)<-paste("groupe",1:length(prov1),sep=" ")
     rownames(prov)<-c("effectifs","pourcentages")
