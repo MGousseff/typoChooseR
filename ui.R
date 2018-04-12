@@ -40,7 +40,8 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                 sliderInput("percIndiv1","Pourcentage echantillon pour représentation de l'ACM",
                             min=0.1,max=100,value=25,step=0.5),
                 withSpinner(uiOutput("varChoice")),
-                actionButton("reset","Toute/aucune variable(s)") 
+                actionButton("reset","Toute/aucune variable(s)"),
+                actionButton("goChoix","Appliquez les choix")
                 ),
               mainPanel(
                         h4(textOutput("messageNA")),
@@ -48,7 +49,7 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                         conditionalPanel(condition="output.alerteNA1>0",
                                     selectInput("naMethod", "Choisir la méthode de prise en compte des NA",
                                                 list("","Convertir en \"Inconnu\"","Supprimer"))),
-                        actionButton("goChoix","Appliquez les choix"),
+                        
                         tags$div(id='la'),
                         withSpinner(plotOutput("MCAplot")),
                         withSpinner(plotOutput("cramerPlot"))
@@ -73,7 +74,7 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                 #    "text/csv",
                 #    "text/comma-separated-values,text/plain",
                 #    ".csv")), 
-                sliderInput("percIndiv","Pourcentage echantillon pour exploration",min=0.1,max=100,value=1,step=0.5),
+                sliderInput("percIndiv","Pourcentage echantillon pour exploration",min=0.2,max=100,value=2,step=0.5),
                
                 selectInput("methode","Méthode de Partitionnement :",
                             choices=c("Kmeans+CAH"="mixte","Modèle de melange"="mixAll","K-means seulement"="kmeans"),selected="kmeans"),
@@ -104,7 +105,7 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                 h4(textOutput("dim2")),
                 conditionalPanel(condition="!input.compareGroup",
                     sliderInput("cos2","A partir de quelle valeur du cos2 représenter les modalités ?", 
-                                min=0, max=1,value=0.3 )),
+                                min=0, max=1,value=0.1 )),
                 withSpinner(plotOutput("plane1Output")),
                 withSpinner(plotOutput("imageMapOutput"))
                 )
@@ -135,6 +136,8 @@ shinyUI(fluidPage( theme=shinytheme("united"),
            downloadButton('downloadData', 'Télécharger')
            ),
            mainPanel(
+             h3("Effectifs des groupes retenus"),
+             dataTableOutput("groupesEff"),
              h3("Répartition des quatre variables les plus liées aux groupes"),
              plotOutput("barPlots"),
              h3("Répartition par groupe de la variable choisie par l'utilisateur"),

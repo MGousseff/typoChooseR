@@ -6,13 +6,14 @@ require(mclust) #pour les CAH
 require(fields)
 require(vcd) # pour calcul des cramers
 require(MixAll)#pour le modèle de mélange
-require(clusterCrit) # pour le pseudo F de Calinsky Harabasz
+require(clusterCrit) # pour les calculs de critère (silhouette et pseudo F)
 require(ggplot2) # pour des graphes avancés
 require(ggrepel)
 require(reshape2) # pour la fonction melt
 #require(cowplot) # Pour l'affichage de plusieurs ggplot en mode grille
 require(gridExtra)
 require(shinyBS)
+require(DT)
 
 options(shiny.maxRequestSize=60*1024^2) 
 
@@ -307,8 +308,12 @@ shinyServer(function(input,output,session){
     inds_1_2<-data.frame(dim1=sorties()$comp[,1],dim2=sorties()$comp[,2],
                          classe=as.factor(sorties()$clusters))
     
+    validate(need(sum(apply(dfMCA()$var$cos2[,1:2],1,mean)==Inf)<1,
+      "Trop peu de données pour calculer les cos2, merci d'augmenter la taille de votre échantillon."))
     
       #catégories des variables, filtrées par le cos2 ### A FAIRE : prendre le cos2 moyen sur le plan
+    print("les cos2 moyens sur le premier plan")
+    print(sort(apply(dfMCA()$var$cos2[,1:2],1,mean)))
     mods_1_2<-data.frame(dim1=dfMCA()$var$coord[apply(dfMCA()$var$cos2[,1:2],1,mean)>input$cos2,1],
                          dim2=dfMCA()$var$coord[apply(dfMCA()$var$cos2[,1:2],1,mean)>input$cos2,2])
    
@@ -324,9 +329,12 @@ shinyServer(function(input,output,session){
     planAbsc<-input$factPlan*2-1
     planOrd<-input$factPlan*2
     
+    validate(need(sum(apply(dfMCA()$var$cos2[,planAbsc:planOrd],1,mean)==Inf)<1,
+                  "Trop peu de données pour calculer les cos2, merci d'augmenter la taille de votre échantillon."))
     
-    modsSup<-data.frame(absc=dfMCA()$var$coord[dfMCA()$var$cos2[,planAbsc]>input$cos2,planAbsc],
-                        ord=dfMCA()$var$coord[dfMCA()$var$cos2[,planAbsc]>input$cos2,planOrd])
+    modsSup<-data.frame(absc=dfMCA()$var$coord[apply(dfMCA()$var$cos2[,c(planAbsc,planOrd)],1,mean)>input$cos2,planAbsc],
+                        ord=dfMCA()$var$coord[apply(dfMCA()$var$cos2[,c(planAbsc,planOrd)],1,mean)>input$cos2,planOrd])
+    
     indsSup<-data.frame(absc=sorties()$comp[,planAbsc],ord=sorties()$comp[,planOrd],
                         classe=as.factor(sorties()$clusters))
     
@@ -347,6 +355,7 @@ shinyServer(function(input,output,session){
     #varCol=modVarCol
     
     
+    
     #print(str(mods_1_2))
     #par(mfrow=c(2,2))
     #plot(sorties()$comp[,1:2],main="Classes sur le premier plan fact.",col=sorties()$clusters) 
@@ -362,7 +371,8 @@ shinyServer(function(input,output,session){
             theme_classic()+stat_ellipse(geom="polygon",alpha=0.2,aes(fill=classe))+
       stat_ellipse(aes(absc,ord,group=classe),linetype=2,color="black")
     
-    modPlot1<-ggplot(mods_1_2,aes(dim1,dim2,label=rownames(mods_1_2),color=vars))+
+    modPlot1<-ggplot(mods_1_2,aes(dim1,dim2,label=rownames(mods_1_2),
+                                  color=vars))+
       geom_point()+scale_color_brewer(palette="Set1",guide=F)+
       geom_text_repel()+theme_classic() +
       labs(title="Modalités les mieux projetées sur le premier plan factoriel")
@@ -504,6 +514,20 @@ shinyServer(function(input,output,session){
   # # ## # # INSTRUCTIONs RELATIVES AU TROISIEME ONGLET POUR L'ANALYSE DES GROUPES OBTENUS et l'export
   # # ## # #
   # # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## # ## 
+  
+  output$groupesEff<-renderDataTable({
+    
+    prov1<-table(sorties()$clusters,deparse.level=0)
+    prov2<-prov1/sum(prov1)
+    prov<-rbind(as.integer(prov1),round(prov2,2))
+    colnames(prov)<-paste("groupe",1:length(prov1),sep=" ")
+    rownames(prov)<-c("effectifs","pourcentages")
+    prov<-DT::datatable(prov,rownames=TRUE, options = list(dom = 't'))
+    prov
+  })
+  
+  
+  
   require(vcd)
   
   output$varPlot <- renderUI({
@@ -540,10 +564,11 @@ shinyServer(function(input,output,session){
       varName<-names(dfEchant())[varCor()[j]] 
       nam<-paste("plot",j,sep="")
       print(as.data.frame(tableProv))
+      largeur<-as.numeric(table(groupes)/length(groupes))
       assign(nam,ggplot(data=as.data.frame(tableProv),aes(x=groupes,y=Freq,fill=Var1)) + 
                geom_bar(position="fill",stat="identity")+ 
                labs(title=varName,subtitle = paste("V Cramer groupe/",varName, round(Vcram,2)))+
-               guides(fill=guide_legend(title=varName)))
+                              guides(fill=guide_legend(title=varName)))
       }
     
     grid.arrange(plot1,plot2,plot3,plot4, nrow=2,ncol=2)
@@ -588,9 +613,10 @@ shinyServer(function(input,output,session){
 
   output$libelles<-renderUI({ 
     output<-tagList()
+    effectifs<-table(sorties()$clusters)
     for (i in seq_along(unique(sorties()$clusters))){
      
-     groupe<-paste("groupe",i)
+     groupe<-paste("groupe",i,"(",effectifs[i],"individus )")
      print(groupe)
      output[[i]]<-textInput(groupe,paste("Libelle ",groupe),value="saisissez un libellé")
     }
