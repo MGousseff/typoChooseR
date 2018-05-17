@@ -15,7 +15,7 @@ require(gridExtra)
 require(shinyBS)
 require(DT)
 
-options(shiny.maxRequestSize=60*1024^2) 
+options(shiny.maxRequestSize=120*1024^2) 
 
 # Fonction pour gérer les données manquante par conversion à une modalité "spécifique"Inconnu"
 naConvert<-function(x){
@@ -500,7 +500,7 @@ shinyServer(function(input,output,session){
       image(heatmapData(),x=1:dimMax,y=1:dimMax,col=rev(heat.colors(40)),
                  main=paste("Indice de Rand pour comparer les partitions à ","\n",isolate(input$nbGroupes), " groupes"),
                  xlab="nombre d'axes retenus pour le calcul des distances", ylab="Nombre d'axes retenus pour le calcul des distances")
-      plot(isolate(dfMCA()$eig[[1]]),main="Valeurs Propres de l'ACM",ylab="Valeurs propres axes ACM") # on met les valeurs propres à côté
+      plot(dfMCA()$eig[,1],main="Valeurs Propres de l'ACM",ylab="Valeurs propres axes ACM") # on met les valeurs propres à côté
     } else {
       plot(0,0,type="n",axes=F,yaxt='n',xaxt='n',ann=FALSE)
             text(0,0,

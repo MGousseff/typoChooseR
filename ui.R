@@ -134,7 +134,7 @@ shinyUI(fluidPage( theme=shinytheme("united"),
              dataTableOutput("groupesEff"),
              h3("Répartition des quatre variables les plus liées aux groupes"),
              plotOutput("barPlots"),
-             h3("Répartition par groupe de la variable choisie par l'utilisateur"),
+             h3("Répartition par groupe de la(les) variable(s) choisie(s) par l'utilisateur"),
              plotOutput("barPlot2")
            )
            )
