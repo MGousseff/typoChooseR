@@ -1,0 +1,134 @@
+---
+title: "Documentation typoChooseR"
+author: "Chaire D-CC"
+date: "24 avril 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Vue d'ensemble 
+
+## A qui s'adresse typoChooseR ?
+
+Pour une utilisation optimale il est préférable que l'outil soit utilisé par un data-scientist (statisticien, machine learne...) en interaction avec un spécialiste métier. 
+
+Un utilisateur novice en statistiques peut aboutir à des typologies par tâtonnements et vérifier dans le dernier onglet qu'il parvient à interpréter les groupes obtenus, mais il existe un risque de ne pas voir que la méthodologie ne convient pas à un jeu de données particulier. 
+
+## Quelle est la démarche générale ?
+
+L'outil propose trois onglets, qui correspondent aux trois étapes de la segmentation
+
+1. Choisir les variables
+2. Choisir la méthode
+3. Explorer les groupes obtenus
+
+Pour chacune des étapes, la visualisation des données accompagne les choix de l'utilisateur
+
+![Ergonomie générale.](TypoProcess.png)
+
+## Quel type de données et quel format d'entrée ?
+
+### Type de données
+Développé dans le cadre de la chaire Data-Connaissance Client, cet outil s'appuie sur des données qualitatives, catégorielles (pays, profession, type de marché). Pour prendre en compte des variables quantitatives il suffit de les *discrétiser*, c'est à dire de les classer par tranche, par exemple par intervalle de même fréquence (quantiles).
+
+### Format csv
+Pour le moment, afin de ne pas surcharger l'interface, typoChooseR ne prend en entrée que des fichiers csv, dont les champs doivent être séparés par des points-virgules (";").
+Les modalités des variables catégorielles peuvent être encadrées par des guillements doubles. 
+
+### Volume
+#### Nombre de variables
+Les choix des variables et l'interprétation des résultats reposent sur des représentations visuelles. Ainsi, si le nombre de variable est très élevé, les représentations seront moins lisibles. 
+#### Nombre d'individus
+L'outil typoChooser sert à explorer différentes méthodes. Le langage de programmation sur lequel il repose, R, travaille "en mémoire", et la limite des données qu'il peut charger dépendra donc de la machine sur lequel il est utilisé. Cependant, dans les onglets de choix de variables ou de méthodes, un curseur permet de choisir la taille de l'échantillon qu'on utilise pour effectuer l'analyse. 
+Si le fichier n'est pas trop gros, ou conclura l'analyse en choisissant la totalité du jeu de données. Dans le cas de jeux de données plus volumineux, on pourra répliquer l'analyse choisie avec des technologies de production plus robustes à la volumétrie. 
+
+
+## Quel format de sortie ?
+Une fois que l'utilisateur est parvenu à une segmentation/typologie qui lui convienne, il peut exporter un fichier au format csv. Ce fichier contient les variables initiales ainsi qu'une variable groupe qui contient les intitulés choisis par l'utilisateurs pour chacun des segments qu'il a définis.
+
+# Premier onglet : choisir les variables
+Le premier onglet se décompose en trois partie. 
+
+## Panneau de gauche : charger et choisir
+
+Le panneau de gauche, permet de choisir le fichier à charger ainsi que les variables qu'on souhaite conserver pour la construction de la typologie. Les variables non retenues seront cosnervées dans le jeu de données. 
+## Panneau central
+
+### Représentation résumée des modalités : plan factoriel d'une analyse des correspondances
+
+En haut du panneau central présente le premier plan d'une analyse factorielle des correspondances multiples réalisée à partir des variables choisies. Sans entrer dans les détails techniques, ce premier plan est celui qui représente avec le moins de perte d'information quelles modalités des variables choisies sont proches ou éloignées, c'est à dire lesquelles sont portées par les mêmes individus ou non. 
+
+### Lien ou corrélation entre les variables : V de Cramer
+
+Retenir plusieurs variables liées entre elles revient à surpondérer ou survaloriser l'information portée par ces variables. Le deuxième graphique du premier panneau permet de choisir des variables pas trop liées entre elles. Toutes les variables sont représentées en abcisse et en ordonnées, au croisement de deux variables, la couleur de la case indique le lien (au sens de l'écart à l'indépendance mesuré par le V de Cramer) entre les deux variables. 
+
+L'utilisateur peut choisir de garder des variables liées s'il accepte que l'information concernée soit surpondérée dans l'analyse. 
+
+Afin de faciliter le choix de peu ou d'un grand nombre de variable, il est possible de cocher ou décocher toutes les variables. 
+
+
+### Itération
+
+Chaque fois que l'utilisateur décide de supprimer ou d'inclure des variables, il clique sur l'un des boutons "Appliquez les choix". L'onglet est actualisé et l'utilisateur peut choisir de modifier son choix ou, s'il est satisfait, de passer à l'onglet suivant (en cliquant dessus dans la barre supérieure).
+
+
+# Deuxième onglet : choisir la méthode et construire les groupes
+
+
+# Troisième onglet : explorer les groupes, les nommer, exporter
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Partitionnement ou classification non-supervisée : les outils algorithmiques pour segmenter une population
+
+Partitionner une population consiste à identifier des sous-groupes d'individus de cette population qui aient un sens. Ce sens peut être donné par une approche métier, une approché géométrique ou reposer sur une modélisation statistique. 
+
+### Approche géométrique et distances
+
+Dans le cas d'une approche géométrique, l'idée générale est de rechercher des groupes tels que :
+
+* deux individus qui appartiennent au même groupe se ressemblent le plus possible, soient le plus proches possibles
+* deux individus appartenant à deux groupes différents soient le plus différents possible, le plus éloignés possible
+
+Il convient donc de définir une distance entre individus ou entre groupes d'individus.
+
+Les deux méthodes géométriques les plus célèbres sont les K-Moyennes et la classification ascendante hiérarchique. 
+
+#### K-Means ou K-moyennes 
+
+L'idée de base est qu'on affecte chaque individu à un point moyen qui lui est le plus proche. Il s'agit alors de trouver ces K points moyens (d'où le nom K-means) de manière à ce que les groupes obtenus soient le plus compacts possibles et les plus séparés les uns des autres. 
+
+#### Classification ascendante hiérarchique et approche mixte
+Un des inconvénients de la méthode précédente est qu'il faut choisir 
+
+### Approche 
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
