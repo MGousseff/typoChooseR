@@ -33,7 +33,7 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                 sliderInput("percIndiv1","Pourcentage echantillon pour représentation de l'ACM",
                             min=0.1,max=100,value=25,step=0.5),
                 withSpinner(uiOutput("varChoice")),
-                actionButton("reset","Toute/aucune variable(s)"),
+                actionButton("reset","Toutes/aucune variable(s)"),
                 actionButton("goChoix","Appliquez les choix")
                 ),
               mainPanel(
@@ -72,7 +72,7 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                 selectInput("methode","Méthode de Partitionnement :",
                             choices=c("Kmeans+CAH"="mixte","Modèle de melange"="mixAll","K-means seulement"="kmeans"),selected="kmeans"),
                 ###actionButton("fixer", "Fixer le nombre maxi de composantes à la dimensionnalité du fichier"),
-                sliderInput("nbGroupes","Nombre de groupes",min=2,max=10,value=4,step=1),
+                sliderInput("nbGroupes","Nombre de groupes",min=2,max=15,value=4,step=1),
                 withSpinner(uiOutput("ui1")),
                 withSpinner(uiOutput("ui2")),
     

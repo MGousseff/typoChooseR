@@ -92,7 +92,7 @@ shinyServer(function(input,output,session){
                                         #### Pourrait être supprimé en version serveur si serveur assez puissant
     echant<-sample(1:nrow(df()),round(input$percIndiv1/100*nrow(df()),digits=0))
     dfEchantPreChoice<-df()[echant,]
-    print(paste("dfEchant a ",nrow(dfEchantPreChoice)," lignes"))
+    #print(paste("dfEchant a ",nrow(dfEchantPreChoice)," lignes"))
     dfEchantPreChoice
   })
   
@@ -134,7 +134,7 @@ shinyServer(function(input,output,session){
   })
   
   observeEvent(input$reset,{  # Gestion du cochage décochage de toutes les variables à la fois
-    print(as.numeric(input$reset))
+    #print(as.numeric(input$reset))
     if (as.numeric(input$reset) > 0) {
       if (as.numeric(input$reset) %% 2 == 0){
         updateCheckboxGroupInput(session,"activeVar",selected=names(df()))
@@ -147,7 +147,7 @@ shinyServer(function(input,output,session){
   
   dfEchant1<-eventReactive(input$goChoix|input$goChoix2,ignoreInit=T,{                     # jeu de données avec la taille d'échantillon et les variables sélectionnées
     dfEchant1<-dfEchantPreChoice()[,input$activeVar]
-    print(input$activeVar)
+    #print(input$activeVar)
     dfEchant1
   })
   
@@ -230,14 +230,14 @@ shinyServer(function(input,output,session){
   dfEchant<-reactive({  # Taille de l'échantillon pour explorer les différentes partitions
     echant<-sample(1:nrow(df()),round(input$percIndiv/100*nrow(df()),digits=0))
     dfEchant<-df()[echant,input$activeVar]
-    print(input$activeVar)
-    print(str(dfEchant))
+    #print(input$activeVar)
+    #print(str(dfEchant))
     dfEchant
   })
   
   dfMCA<-reactive({
     dfMCA<-MCA(dfEchant(),graph=F,ncp=sum(sapply(dfEchant(),nlevels)))
-    print("etape dfMCA")
+    #print("etape dfMCA")
     dfMCA
     
   })
@@ -312,8 +312,8 @@ shinyServer(function(input,output,session){
       "Trop peu de données pour calculer les cos2, merci d'augmenter la taille de votre échantillon."))
     
       #catégories des variables, filtrées par le cos2 ### A FAIRE : prendre le cos2 moyen sur le plan
-    print("les cos2 moyens sur le premier plan")
-    print(sort(apply(dfMCA()$var$cos2[,1:2],1,mean)))
+    #print("les cos2 moyens sur le premier plan")
+    #print(sort(apply(dfMCA()$var$cos2[,1:2],1,mean)))
     mods_1_2<-data.frame(dim1=dfMCA()$var$coord[apply(dfMCA()$var$cos2[,1:2],1,mean)>input$cos2,1],
                          dim2=dfMCA()$var$coord[apply(dfMCA()$var$cos2[,1:2],1,mean)>input$cos2,2])
    
@@ -340,7 +340,7 @@ shinyServer(function(input,output,session){
     
       temp<-dfMCA()$call$X
       ModVar<-function(chaine){names(temp)[apply(temp,2,function(x){chaine%in%x})]} # Quelle honte, modifier ce code !
-      print(names(temp)[apply(temp,2,function(x){row.names(modsSup)[1]%in%x})])
+      #print(names(temp)[apply(temp,2,function(x){row.names(modsSup)[1]%in%x})])
       modVarNames<-tapply(row.names(modsSup),row.names(modsSup),ModVar)
       modsSup$vars<-as.factor(modVarNames)
   
@@ -384,7 +384,7 @@ shinyServer(function(input,output,session){
         1:input$nbComp]
     
       gCritcompare<-function(j){
-        print(j)
+        #print(j)
         intCriteria(data,kmeans(data,centers=j,iter.max = 100, nstart = 40,
                                                          algorithm = "Hartigan-Wong")$cluster,crit="Silhouette")}
       groupSeq<-3:input$groupMax
@@ -400,7 +400,7 @@ shinyServer(function(input,output,session){
                                               size=min(nrow(isolate(dfMCA()$ind$coord)),5000)),
                                        1:isolate(input$nbComp)]
       gCritcompare<-function(j){ # finalement critère retenu = silhouette, mais je ne renomme pas la variable
-        print(j)
+        #print(j)
         intCriteria(data,kmeansCAH(data,nbGroupes=j),crit="Silhouette")}
       groupSeq<-3:input$groupMax
       
@@ -455,10 +455,10 @@ shinyServer(function(input,output,session){
       if(isolate(input$compareGroup)==F&isolate(input$methode)=="mixte"){ 
         #dimMax<-length(isolate(dfMCA())$eig[,1])
         dimMax<-sum(isolate(dfMCA())$eig[,1]>=0.05*isolate(dfMCA())$eig[1,1])
-        print(dimMax)
+        #print(dimMax)
         data<-isolate(dfMCA())$ind$coord 
         fkmeansCAH<-function(i){                    # création d'une fonction prenant l'indice en entrée afin d'utiliser outer pour la création de la heatmap
-          print(i)
+          #print(i)
           kmeansCAH(data=data[,1:i],nbGroupes=isolate(input$nbGroupes))
         }
         x<-1:dimMax
@@ -470,10 +470,10 @@ shinyServer(function(input,output,session){
         else if(isolate(input$compareGroup)==F&isolate(input$methode)=="kmeans"){               # on fait des K-means avec toutes les composantes et on les compare
         #dimMax<-length(isolate(dfMCA())$eig[,1])
         dimMax<-sum(isolate(dfMCA())$eig[,1]>=0.05*isolate(dfMCA())$eig[1,1])
-        print(dimMax)
+        #print(dimMax)
         data<-isolate(dfMCA()$ind$coord)
         fkmeans<-function(i){
-          print(i)
+          #print(i)
           kmeans(x=data[,1:i],centers=isolate(input$nbGroupes),iter.max = 100, nstart = 90,
                  algorithm = "Hartigan-Wong")$cluster
         }
@@ -494,9 +494,9 @@ shinyServer(function(input,output,session){
     if(input$compareGroup==F&(input$methode=="mixte"|input$methode=="kmeans")){
       #dimMax<-length(isolate(dfMCA())$eig[,1])
       dimMax<-sum(isolate(dfMCA())$eig[,1]>=0.05*isolate(dfMCA())$eig[1,1])
-      print(paste("dimMax le nombre de dimensions est de ",dimMax))
+      #print(paste("dimMax le nombre de dimensions est de ",dimMax))
       par(mfrow=c(1,2))
-      print(heatmapData())
+      #print(heatmapData())
       image(heatmapData(),x=1:dimMax,y=1:dimMax,col=rev(heat.colors(40)),
                  main=paste("Indice de Rand pour comparer les partitions à ","\n",isolate(input$nbGroupes), " groupes"),
                  xlab="nombre d'axes retenus pour le calcul des distances", ylab="Nombre d'axes retenus pour le calcul des distances")
@@ -565,7 +565,7 @@ shinyServer(function(input,output,session){
       tableProv<-tableProv/apply(tableProv,1,sum)
       varName<-names(dfEchant())[varCor()[j]] 
       nam<-paste("plot",j,sep="")
-      print(as.data.frame(tableProv))
+      #print(as.data.frame(tableProv))
       largeur<-as.numeric(table(groupes)/length(groupes))
       assign(nam,ggplot(data=as.data.frame(tableProv),aes(x=groupes,y=Freq,fill=Var1)) + 
                geom_bar(position="fill",stat="identity")+ 
@@ -585,15 +585,15 @@ shinyServer(function(input,output,session){
     groupes<-sorties()$clusters
     
     for(j in 1:length(input$varPlot)){
-      print("nombre de lignes")
-        print(nrow(df()[rownames(dfEchant()),input$varPlot[j]]))
-       print(nrow(groupes))
+      #print("nombre de lignes")
+      #print(nrow(df()[rownames(dfEchant()),input$varPlot[j]]))
+      #print(nrow(groupes))
         tableProv<-table(df()[rownames(dfEchant()),input$varPlot[j]],groupes)
         varProv<-df()[rownames(dfEchant()),input$varPlot[j]]
         Vcram<-assocstats(tableProv)$cramer
         tableProv<-tableProv/apply(tableProv,1,sum)
-        print("tableprov")
-        print(tableProv)
+        #print("tableprov")
+        #print(tableProv)
         #tableDF<-as.data.frame(tableProv)
         #print(tableDF)
         varName<-names(dfEchantPreChoice()[,input$varPlot])[j]
@@ -613,40 +613,47 @@ shinyServer(function(input,output,session){
     
   })
 
+  
+  ## Creation de l'interfrace de saisie des libellés des groupes retenus
+  
   output$libelles<-renderUI({ 
     output<-tagList()
     effectifs<-table(sorties()$clusters)
-    for (i in seq_along(unique(sorties()$clusters))){
+    for (i in 1:input$nbGroupes){
      
-     groupe<-paste("groupe",i,"(",effectifs[i],"individus )")
+     groupe<-paste("groupe",i)
      print(groupe)
-     output[[i]]<-textInput(groupe,paste("Libelle ",groupe),value="saisissez un libellé")
+     output[[i]]<-textInput(groupe,paste("Libelle ",groupe,", (",effectifs[i],"individus )"),value="saisissez un libellé")
     }
     output
   })
   
   
-  observeEvent(input$exporter,{
-    
-    libelles<-NULL
-    for (i in 1:input$nbGroupes){
-    print(paste("groupe",i))
-      libelles[i]<-input[[paste("groupe",i)]]
-    }
-    print(libelles)
-    
-    
-    clusteredDF<-cbind(dfEchant(),sorties()$clusters,libelles[sorties()$clusters])
-    #print(head(clusteredDF))
-    #print("j'aimerais exporter")
-    write.table(clusteredDF,"clusteredDF",quote=F,sep=";",col.names=T,row.names=T)
-    print("fait")
-  })
-
   #######################################################
   ###
   ### télécharger le fichier partitionné
   #######################################################
+  
+  #observeEvent(input$exporter,{ # A PRIORI PLUS UTILISE DANS L'EXPORT A SUPPRIMER APRES DEBOGAGE
+  #  
+  #  libelles<-NULL
+  #  for (i in 1:input$nbGroupes){
+  #    print(paste("groupe",i))
+  #    libelles[i]<-input[[paste("groupe",i)]]
+  #  }
+  #  print(libelles)
+    
+  #  
+  #  clusteredDF<-cbind(dfEchant(),sorties()$clusters,libelles[sorties()$clusters])
+  #  #print(head(clusteredDF))
+  #  #print("j'aimerais exporter")
+  #  write.table(clusteredDF,"clusteredDF",quote=F,sep=";",col.names=T,row.names=T)
+  #  print("fait")
+  #})
+  
+  
+  
+  
   
   output$downloadData <- downloadHandler(
     
@@ -662,17 +669,17 @@ shinyServer(function(input,output,session){
       sep <- ";"
       libelles<-NULL
       for (i in 1:input$nbGroupes){
-        print(paste("groupe",i))
         libelles[i]<-input[[paste("groupe",i)]]
       }
       # Write to a file specified by the 'file' argument
       data<-data.frame(cbind(dfEchant(),sorties()$clusters,libelles[sorties()$clusters]))
-                       names(data)<-c(names(dfEchant()),"groupID","groupLabel")
+      names(data)<-c(names(dfEchant()),"groupID","groupLabel")
+      print(head(data,2))
       write.table(data, file, sep = sep,row.names = FALSE)
+      
     }
   )
   
-    
     })
 
 
