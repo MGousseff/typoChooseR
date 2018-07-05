@@ -2,7 +2,9 @@
 title: "Documentation typoChooseR"
 author: "Chaire D-CC"
 date: "24 avril 2018"
-output: html_document
+output: github_document
+---
+
 ---
 
 ```{r setup, include=FALSE}
