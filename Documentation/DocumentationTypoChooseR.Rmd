@@ -49,7 +49,7 @@ Si le fichier n'est pas trop gros, ou conclura l'analyse en choisissant la total
 ## Quel format de sortie ?
 Une fois que l'utilisateur est parvenu à une segmentation/typologie qui lui convienne, il peut exporter un fichier au format csv. Ce fichier contient les variables initiales ainsi qu'une variable groupe qui contient les intitulés choisis par l'utilisateurs pour chacun des segments qu'il a définis.
 
-## Quels packages charger dans R pour l'utiliser ?
+## Quels packages charger dans R prou l'utiliser ?
 
 L'implémentation des algorithmes et de l'interface exige qu'un certain nombre de packages soient installés dans votre distribution R. Le code ci-dessous permet d'installer l'ensemble des packages nécessaires à l'exécution de l'application shiny dans R-Studio.
 
@@ -57,7 +57,7 @@ L'implémentation des algorithmes et de l'interface exige qu'un certain nombre d
 packages_a_installer<-c(
   "shiny","shinythemes","shinycssloaders","shinyBS","shinyWidgets","FactoMineR","mclust",
   "fields","vcd","MixAll","clusterCrit","ggplot2","ggrepel","reshape2","gridExtra","DT")
-install.packages(packages_a_installer)  
+install.packages("packages_a_installer")  
 
 ```
 
