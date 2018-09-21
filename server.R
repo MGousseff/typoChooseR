@@ -447,7 +447,15 @@ shinyServer(function(input,output,session){
   #########   ############ #########   ############ #########   ############ #########   ############ #########   ############ 
   #########   ############ #########   ############ #########   ############ #########   ############ #########   ############ 
   
-  
+   #dimMaxExpl<-reactive(sum(isolate(dfMCA())$eig[,1]>=0.05*isolate(dfMCA())$eig[1,1]))
+   output$nbCompMax <- renderUI({
+     infile<-input$fichier 
+     if (!is.null(infile)){sliderInput("nbCompMax", "Nombre de composantes à explorer", 
+                                       2,sum(isolate(dfMCA())$eig[,1]>=0.05*isolate(dfMCA())$eig[1,1]),4,step=1)
+     }})
+   
+   
+   
   heatmapData<-eventReactive(input$imageMap,{                            # C'est le bouton d'action qui provoque la réalisation de la carte des comparaisons
       infile<-isolate(input$fichier)                                     # NOTE : les isolate peuvent être supprimés grâce à l'encapsulation dans event reactive. 
       
