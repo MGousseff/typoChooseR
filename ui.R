@@ -37,6 +37,8 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                 actionButton("goChoix","Appliquez les choix")
                 ),
               mainPanel(
+                h5("Certains graphiques ne peuvent être affichés que si l'application est ouverte dans un navigateur"),
+                h6("(et non dans la fenêtre Rstudio)"),
                         actionButton("goChoix2","Appliquez les choix"),
                         h4(textOutput("messageNA")),
                         conditionalPanel(condition="output.alerteNA1>0",
@@ -44,8 +46,8 @@ shinyUI(fluidPage( theme=shinytheme("united"),
                                                 list("","Convertir en \"Inconnu\"","Supprimer"))),
                         
                         tags$div(id='la'),
-                        withSpinner(plotOutput("MCAplot")),
-                        withSpinner(plotOutput("cramerPlot"))
+                        withSpinner(plotlyOutput("MCAplot")),
+                        withSpinner(plotlyOutput("cramerPlot"))
                                                 )
              ),
              

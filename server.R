@@ -159,7 +159,7 @@ shinyServer(function(input,output,session){
     dfMCA1}
   })
   
-  output$MCAplot<-renderPlot({          # Premier plan factoriel de l'ACM du point de vue modalités
+  output$MCAplot<-renderPlotly({          # Premier plan factoriel de l'ACM du point de vue modalités
     if (alerteNA()==0 | input$naMethod=="Convertir en \"Inconnu\"" | input$naMethod=="Supprimer"){
     if (!is.null(input$fichier)){
       
@@ -178,7 +178,7 @@ shinyServer(function(input,output,session){
   })
   
   
-  output$cramerPlot<-renderPlot({
+  output$cramerPlot<-renderPlotly({
     if (alerteNA()==0 | input$naMethod=="Convertir en \"Inconnu\"" | input$naMethod=="Supprimer"){
       if (!is.null(input$fichier)){
         
